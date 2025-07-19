@@ -3,7 +3,6 @@ import React, { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
 const mainVariant = {
@@ -28,12 +27,12 @@ const secondaryVariant = {
 };
 
 export const FileUpload = ({
+  user,
   onChange,
 }: {
+  user: UserType | null | undefined;
   onChange?: (files: File[]) => void;
 }) => {
-  const { user } = useUser();
-
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
