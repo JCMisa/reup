@@ -4,6 +4,8 @@ import { motion } from "motion/react";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useUploadedFile } from "@/context/UploadedFileContext";
 
 const mainVariant = {
   initial: {
@@ -35,14 +37,43 @@ export const FileUpload = ({
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const { setUploadedFile } = useUploadedFile();
 
   const handleFileChange = (newFiles: File[]) => {
-    if (user) {
-      setFiles((prevFiles) => [...prevFiles, ...newFiles]);
-    } else {
+    if (!user) {
       toast.error("Please log in to upload files.");
+      return;
     }
-    if (onChange) onChange(newFiles);
+
+    const file = newFiles[0]; // Only take the first file
+    if (!file) return;
+
+    // Check file type
+    const validTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+    ];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Please upload a PDF, JPG, or PNG file");
+      return;
+    }
+
+    // Check file size (5MB limit)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    setFiles([file]); // Only store one file
+    setUploadedFile(file); // Store in context
+    if (onChange) onChange([file]);
+
+    // Redirect to reup page
+    router.push("/reup");
   };
 
   const handleClick = () => {
@@ -52,9 +83,18 @@ export const FileUpload = ({
   const { getRootProps, isDragActive } = useDropzone({
     multiple: false,
     noClick: true,
+    maxSize: 5 * 1024 * 1024, // 5MB in bytes
+    accept: {
+      "application/pdf": [".pdf"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+    },
     onDrop: handleFileChange,
     onDropRejected: (error) => {
-      console.log(error);
+      const errorMessage =
+        error[0]?.errors[0]?.message || "Invalid file type or file too large";
+      toast.error(errorMessage);
+      console.log("file upload error: ", error);
     },
   });
 
@@ -71,7 +111,7 @@ export const FileUpload = ({
           ref={fileInputRef}
           id="file-upload-handle"
           type="file"
-          accept=".pdf"
+          accept=".pdf,.jpg,.jpeg,.png"
           disabled={user ? false : true}
           onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
           className="hidden"
@@ -82,6 +122,9 @@ export const FileUpload = ({
           </p>
           <p className="relative z-20 font-sans font-normal text-center text-neutral-400 dark:text-neutral-400 text-base mt-2">
             Drag or drop your files here or click to upload
+          </p>
+          <p className="relative z-20 font-sans text-sm text-center text-neutral-400 dark:text-neutral-500 mt-1">
+            Maximum file size: 5MB
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&

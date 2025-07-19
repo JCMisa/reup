@@ -7,6 +7,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import SyncUserProvider from "@/providers/SyncUserProvider";
 import Script from "next/script";
+import { UploadedFileProvider } from "@/context/UploadedFileContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,7 +57,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <SyncUserProvider>{children}</SyncUserProvider>
+            <SyncUserProvider>
+              <UploadedFileProvider>{children}</UploadedFileProvider>
+            </SyncUserProvider>
             <Toaster />
           </ThemeProvider>
         </body>

@@ -13,7 +13,7 @@ export const navItemsHome = [
   },
 ];
 
-export const navItemsDashboard = [
+export const navItemsRoutes = [
   {
     name: "Dashboard",
     link: "/dashboard",
