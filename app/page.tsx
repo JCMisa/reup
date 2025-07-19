@@ -1,13 +1,11 @@
-import ModeToggle from "@/components/custom/ModeToggle";
-import { Button } from "@/components/ui/button";
-import { UserButton } from "@clerk/nextjs";
+import Hero from "@/components/custom/Hero";
+import { NavbarComponent } from "@/components/custom/Navbar";
 
 export default function Home() {
   return (
-    <div>
-      <Button>Click Me</Button>
-      <ModeToggle />
-      <UserButton />
+    <div className="relative">
+      <NavbarComponent />
+      <Hero />
     </div>
   );
 }
