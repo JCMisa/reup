@@ -155,6 +155,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  body::-webkit-scrollbar-thumb {
+    display: none;
+  }
 }
 
 @layer components {

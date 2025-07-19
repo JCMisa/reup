@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import SyncUserProvider from "@/providers/SyncUserProvider";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,12 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
+          <Script
+            src="https://js.puter.com/v2/"
+            strategy="afterInteractive" // Or "beforeInteractive" if critical
+            id="puter-script" // Give it an ID for Next.js optimization
+          />
+
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

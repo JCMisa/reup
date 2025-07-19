@@ -21,7 +21,7 @@ const Hero = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col space-y-6 items-center justify-center overflow-hidden sm:px-20">
+    <div className="relative flex flex-col space-y-6 items-center justify-center overflow-hidden px-5 sm:px-20">
       <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
         <GridPattern />
       </div>

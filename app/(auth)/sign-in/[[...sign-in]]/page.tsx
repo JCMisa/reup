@@ -1,6 +1,20 @@
 import { BackgroundLines } from "@/components/ui/background-lines";
 import { SignIn } from "@clerk/nextjs";
 
+export const meta = () => [
+  { title: "ReUp | Signin" },
+  {
+    name: "description",
+    content:
+      "Log in to ReUp to continue crafting your professional resume and receive AI-powered feedback to enhance your job application.",
+  },
+  {
+    name: "keywords",
+    content:
+      "ReUp, resume builder, AI feedback, resume verifyer, job application, professional resume, sign in, login",
+  },
+];
+
 const SigninPage = () => {
   return (
     <div>
