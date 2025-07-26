@@ -19,3 +19,5 @@ export const withErrorHandling = <T, A extends unknown[]>(
     }
   };
 };
+
+export const generateUUID = () => crypto.randomUUID();

@@ -1,25 +1,38 @@
 "use client";
 
 import { useUploadedFile } from "@/context/UploadedFileContext";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { BackgroundLines } from "@/components/ui/background-lines";
 import { FileUpload } from "@/components/ui/file-upload";
 import { UserDetailContext } from "@/context/UserDetailContext";
+import { LoaderCircleIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
+import { usePuterStore } from "@/lib/puter";
+import { useRouter } from "next/navigation";
+import { convertPdfToImages } from "@/lib/pdfToImg";
+import { generateUUID } from "@/lib/utils";
+import { prepareInstructions } from "@/constants";
 
 export default function ReUpPage() {
+  const { isLoading, fs, ai, kv } = usePuterStore();
+  const router = useRouter();
+
   const { userDetails } = useContext(UserDetailContext) || {};
-  const { uploadedFile } = useUploadedFile();
+  const { uploadedFile, setUploadedFile } = useUploadedFile();
 
   // Form states
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [files, setFiles] = useState<File[]>([]);
+  const [file, setFile] = useState<File | null>(uploadedFile || null);
   const [formData, setFormData] = useState({
     companyName: "",
     jobTitle: "",
     jobDescription: "",
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const [statusText, setStatusText] = useState("");
 
+  // todo: we can remove this convertion to url
   useEffect(() => {
     if (uploadedFile) {
       // Create a URL for the file
@@ -32,7 +45,7 @@ export default function ReUpPage() {
   }, [uploadedFile]);
 
   const handleFileUpload = (files: File[]) => {
-    setFiles(files);
+    setFile(files[0]);
   };
 
   const handleInputChange = (
@@ -45,10 +58,137 @@ export default function ReUpPage() {
     }));
   };
 
-  const handleAnalyze = () => {
-    console.log({
-      file: fileUrl,
-      ...formData,
+  const handleAnalyze = async ({
+    companyName,
+    jobTitle,
+    jobDescription,
+    file,
+  }: {
+    companyName: string;
+    jobTitle: string;
+    jobDescription: string;
+    file: File;
+  }) => {
+    setIsUploading(true);
+    setStatusText("Uploading file...");
+    try {
+      const fileUploaded = await fs.upload([file]); // upload the file in the puter cloud storage
+      if (!fileUploaded) {
+        toast.error("Failed to upload file");
+        setStatusText("Failed to upload file");
+      }
+
+      // convert image
+      setStatusText("Converting to image...");
+      if (file.type === "application/pdf") {
+        const imageResults = await convertPdfToImages(file, {
+          scale: 1.5,
+          format: "png",
+          quality: 0.95,
+        });
+
+        // Process each converted page
+        const convertedFiles: File[] = [];
+        imageResults.forEach((result, index) => {
+          if (result.success && result.imageBlob) {
+            const imageFile = new File(
+              [result.imageBlob],
+              `${file.name.replace(".pdf", "")}_page_${index + 1}.png`,
+              {
+                type: "image/png",
+              }
+            );
+            convertedFiles.push(imageFile);
+            console.log(`Page ${index + 1} converted:`, imageFile);
+          } else {
+            console.error(`Failed to convert page ${index + 1}:`, result.error);
+          }
+        });
+
+        console.log(
+          `Successfully converted ${convertedFiles.length} out of ${imageResults.length} pages`
+        );
+
+        if (convertedFiles.length === 0) {
+          toast.error("Failed to convert any pages of the PDF");
+          setStatusText("Failed to convert PDF to image");
+          return;
+        }
+
+        // Upload the first converted image (or you can upload all if needed)
+        const uploadedImage = await fs.upload([convertedFiles[0]]); // upload the first converted image for ui display
+
+        if (!uploadedImage) {
+          toast.error("Failed to upload image");
+          setStatusText("Failed to upload image");
+          return;
+        }
+
+        setStatusText("Preparing data...");
+        const uuid = generateUUID();
+        const data = {
+          id: uuid,
+          resumePath: fileUploaded?.path,
+          imagePath: uploadedImage?.path,
+          companyName,
+          jobTitle,
+          jobDescription,
+          feedback: "",
+        };
+
+        await kv.set(`resume:${uuid}`, JSON.stringify(data)); // creating a record in puter database with the data passed
+        // todo: use drizzle action to store the data in neon database
+
+        setStatusText("Analyzing resume...");
+
+        const feedback = await ai.feedback(
+          fileUploaded?.path as string,
+          prepareInstructions({ jobTitle, jobDescription })
+        );
+
+        if (!feedback) {
+          toast.error("Failed to analyze resume");
+          setStatusText("Failed to analyze resume");
+          return;
+        }
+
+        // feedback.message.content can be string or string[]
+        let feedbackText: string;
+        if (typeof feedback.message.content === "string") {
+          feedbackText = feedback.message.content;
+        } else if (Array.isArray(feedback.message.content)) {
+          feedbackText = feedback.message.content[0].text || "";
+        } else {
+          feedbackText = "";
+        }
+
+        data.feedback = JSON.parse(feedbackText);
+        // updating the record in puter database with the updated feedback property
+        await kv.set(`resume:${uuid}`, JSON.stringify(data));
+        // todo: use drizzle action to update the data - feedback in neon database
+        setStatusText("Resume analyzed successfully");
+        toast.success("Resume analyzed successfully");
+        console.log("Resume analyzed successfully", data);
+      }
+    } catch (error) {
+      console.log("failed to upload file: ", error);
+      toast.error("Failed to upload file");
+      setStatusText("Failed to upload file");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!file) {
+      toast.error("Please upload a file");
+      return;
+    }
+    handleAnalyze({
+      companyName: formData.companyName,
+      jobTitle: formData.jobTitle,
+      jobDescription: formData.jobDescription,
+      file: file,
     });
   };
 
@@ -137,12 +277,13 @@ export default function ReUpPage() {
           </div>
         </div>
 
-        {!uploadedFile ? (
-          <div className="relative z-10 w-full max-w-4xl mx-auto min-h-96 border border-dashed bg-neutral-200/20 dark:bg-neutral-800/20 backdrop-blur-sm border-neutral-200 dark:border-neutral-800 rounded-lg mt-3">
+        {!uploadedFile || !fileUrl ? (
+          <div className="relative z-10 w-full max-w-3xl mx-auto min-h-96 border border-dashed bg-neutral-200/20 dark:bg-neutral-800/20 backdrop-blur-sm border-neutral-200 dark:border-neutral-800 rounded-lg mt-3">
             <FileUpload user={userDetails} onChange={handleFileUpload} />
           </div>
         ) : (
-          <>
+          <div className="relative z-10 w-full max-w-3xl mx-auto">
+            {/* todo: we do not need image file upload */}
             {fileUrl && uploadedFile.type.startsWith("image/") && (
               <div className="mt-4 relative h-[500px] w-full max-w-3xl z-10">
                 <Image
@@ -164,21 +305,36 @@ export default function ReUpPage() {
                 />
               </div>
             )}
-          </>
+            {fileUrl && (
+              <button
+                className="w-8 h-8 p-2 bg-primary cursor-pointer text-white rounded-full flex items-center justify-center absolute top-0 right-0 z-20"
+                onClick={() => {
+                  setFileUrl(null);
+                  setUploadedFile(null);
+                  setFile(null);
+                }}
+              >
+                <XIcon className="size-4" />
+              </button>
+            )}
+          </div>
         )}
 
         {/* Analyze Button */}
         <button
-          onClick={handleAnalyze}
+          onClick={handleSubmit}
           disabled={
             !uploadedFile ||
+            (!file && !fileUrl) ||
             !formData.companyName ||
             !formData.jobTitle ||
-            !formData.jobDescription
+            !formData.jobDescription ||
+            isUploading
           }
-          className={`mt-6 px-6 py-2 rounded-md text-white font-medium transition-colors z-10 w-full lg:w-[45%]
+          className={`mt-6 px-6 py-2 rounded-md text-white font-medium transition-colors z-10 w-full min-w-0 lg:w-[30%] flex items-center justify-center
             ${
               !uploadedFile ||
+              (!file && !fileUrl) ||
               !formData.companyName ||
               !formData.jobTitle ||
               !formData.jobDescription
@@ -186,7 +342,11 @@ export default function ReUpPage() {
                 : "bg-primary hover:bg-primary-600 cursor-pointer"
             }`}
         >
-          Analyze Resume
+          {isUploading ? (
+            <LoaderCircleIcon className="size-4 animate-spin" />
+          ) : (
+            "ReUp Resume"
+          )}
         </button>
       </BackgroundLines>
     </div>
