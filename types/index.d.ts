@@ -16,7 +16,7 @@ declare interface ResumeType {
   jobTitle?: string;
   imageUrl: string;
   resumePath: string;
-  feedback: Feedback;
+  feedback: FeedbackType;
 }
 
 interface FeedbackType {
