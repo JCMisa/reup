@@ -61,3 +61,17 @@ interface FeedbackType {
     }[];
   };
 }
+
+declare interface AnalyzedResumeType {
+  id: number;
+  analyzedResumeId: string;
+  createdBy: string;
+  resumePath: string | null;
+  imagePath: string | null;
+  companyName: string | null;
+  jobTitle: string | null;
+  jobDescription: string | null;
+  feedback: FeedbackType | unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -15,9 +15,9 @@ export const BackgroundLines = ({
   };
 }) => {
   return (
-    <div className={cn("h-[20rem] md:h-screen w-full", className)}>
+    <div className={cn("relative w-full min-h-screen", className)}>
       <SVG svgOptions={svgOptions} />
-      {children}
+      <div className="relative z-10 w-full">{children}</div>
     </div>
   );
 };

@@ -8,6 +8,13 @@
       "when": 1752891267254,
       "tag": "0000_dear_paibok",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1753669032408,
+      "tag": "0001_careful_magik",
+      "breakpoints": true
     }
   ]
 }

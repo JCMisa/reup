@@ -21,3 +21,7 @@ export const withErrorHandling = <T, A extends unknown[]>(
 };
 
 export const generateUUID = () => crypto.randomUUID();
+
+export const parseStringify = (value: unknown) => {
+  return JSON.parse(JSON.stringify(value));
+};
