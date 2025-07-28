@@ -12,12 +12,12 @@ export async function POST(req: NextRequest) {
 
   const {
     id,
-    resumePath,
-    imagePath,
     companyName,
     jobTitle,
     jobDescription,
     feedback,
+    resumeUrl,
+    imageUrl,
   } = data;
 
   const user = await getCurrentUser();
@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     const data = await db.insert(AnalyzedResumes).values({
       analyzedResumeId: id,
       createdBy: user.userId,
-      resumePath,
-      imagePath,
+      resumePath: resumeUrl,
+      imagePath: imageUrl,
       companyName,
       jobTitle,
       jobDescription,

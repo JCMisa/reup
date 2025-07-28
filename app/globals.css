@@ -174,6 +174,26 @@
   .transcript-fade {
     @apply pointer-events-none absolute bottom-0 left-0 right-0 h-40 max-sm:h-20 bg-gradient-to-t from-background via-background/90 to-transparent z-10;
   }
+
+  /* Resume glow background for light mode */
+  .resume-glow-bg {
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      rgba(244, 63, 94, 0.15),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  /* Resume glow background for dark mode */
+  .dark .resume-glow-bg {
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      rgba(244, 63, 94, 0.25),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
 }
 
 @layer utilities {

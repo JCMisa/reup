@@ -17,7 +17,7 @@ import axios from "axios";
 import StatusOverlay from "@/components/custom/StatusOverlay";
 
 export default function ReUpPage() {
-  const { isLoading, fs, ai, kv } = usePuterStore();
+  const { fs, ai, kv } = usePuterStore();
   const router = useRouter();
 
   const { userDetails } = useContext(UserDetailContext) || {};
@@ -169,9 +169,10 @@ export default function ReUpPage() {
         const result = await axios.post("/api/analyzed-resume", { data });
 
         if (result.status === 200) {
-          setStatusText("Resume analyzed successfully");
+          setStatusText("Resume analyzed successfully, redirecting...");
           toast.success("Resume saved successfully");
           console.log("Resume analyzed successfully: ", data);
+          router.push(`/resume/${uuid}`);
         }
       }
     } catch (error) {
@@ -359,7 +360,11 @@ export default function ReUpPage() {
       </BackgroundLines>
 
       {/* Status Overlay */}
-      <StatusOverlay isVisible={isUploading} statusText={statusText} />
+      <StatusOverlay
+        isVisible={isUploading}
+        statusText={statusText}
+        isModal={true}
+      />
     </div>
   );
 }

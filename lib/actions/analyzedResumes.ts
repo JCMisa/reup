@@ -27,3 +27,16 @@ export const getUserAnalyzedResumes = withErrorHandling(async () => {
 
   return data;
 });
+
+export const getByResumeId = withErrorHandling(async (resumeId: string) => {
+  const data = await db
+    .select()
+    .from(AnalyzedResumes)
+    .where(eq(AnalyzedResumes.analyzedResumeId, resumeId));
+
+  if (data.length === 0) {
+    throw new Error("No Resume Found With the Specified ID");
+  }
+
+  return data[0];
+});
