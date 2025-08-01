@@ -1,13 +1,16 @@
 import { NavbarComponent } from "@/components/custom/Navbar";
 import { navItemsRoutes } from "@/constants";
+import AuthFlow from "@/components/custom/AuthFlow";
 import React from "react";
 
 const RoutesLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="relative">
-      <NavbarComponent navItems={navItemsRoutes} />
-      {children}
-    </div>
+    <AuthFlow>
+      <div className="relative">
+        <NavbarComponent navItems={navItemsRoutes} />
+        {children}
+      </div>
+    </AuthFlow>
   );
 };
 

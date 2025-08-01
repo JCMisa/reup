@@ -1,3 +1,5 @@
+"use client";
+
 import Hero from "@/components/custom/Hero";
 import { NavbarComponent } from "@/components/custom/Navbar";
 import SampleResume from "@/components/custom/SampleResume";

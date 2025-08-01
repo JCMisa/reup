@@ -5,23 +5,43 @@ import { FileUpload } from "../ui/file-upload";
 import { GridPattern } from "./GridPattern";
 import HeroMainText from "./HeroMainText";
 import { AnimatedShinyText } from "../magicui/animated-shiny-text";
-import { cn } from "@/lib/utils";
-import { ArrowRightIcon } from "lucide-react";
+import { cn, isAdmin } from "@/lib/utils";
+import { ArrowRightIcon, PlusSquareIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { UserDetailContext } from "@/context/UserDetailContext";
+import { useUser } from "@clerk/nextjs";
 
 const Hero = () => {
   const { userDetails } = useContext(UserDetailContext) || {};
+  const { user, isLoaded } = useUser();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [files, setFiles] = useState<File[]>([]);
   const handleFileUpload = (files: File[]) => {
     setFiles(files);
     console.log(files);
   };
 
+  // Check if user is admin using Clerk user data
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+  const isUserAdmin = isLoaded && user ? isAdmin(userEmail) : false;
+
+  // Debug logging
+  console.log("User email:", userEmail);
+  console.log("Is admin:", isUserAdmin);
+
   return (
     <div className="relative flex flex-col space-y-6 items-center justify-center overflow-hidden px-5 sm:px-20">
+      {isUserAdmin && (
+        <Link
+          href="/admin"
+          className="flex items-center gap-2 cursor-pointer absolute top-3 right-3 z-50"
+        >
+          <PlusSquareIcon className="size-4" />
+          <span className="text-sm">Create Invite Codes</span>
+        </Link>
+      )}
       <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
         <GridPattern />
       </div>

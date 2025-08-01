@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -6,8 +7,27 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+
+export const inviteCodes = pgTable(
+  "invite_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull().unique(),
+    expiresAt: timestamp("expires_at"),
+    used: boolean("used").default(false).notNull(),
+    usedBy: varchar("used_by"),
+    firstUsedAt: timestamp("first_used_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("invite_codes_code_idx").on(table.code),
+    index("invite_codes_used_idx").on(table.used),
+    index("invite_codes_used_by_idx").on(table.usedBy),
+  ]
+);
 
 export const Users = pgTable(
   "users",
@@ -19,6 +39,9 @@ export const Users = pgTable(
     image: text("image"),
     credits: integer().default(2).notNull(),
     role: varchar("role").default("user").notNull(),
+    freeGranted: boolean("free_granted")
+      .$defaultFn(() => false)
+      .notNull(),
     createdAt: timestamp("createdAt")
       .$defaultFn(() => /* @__PURE__ */ new Date())
       .notNull(),

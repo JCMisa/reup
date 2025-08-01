@@ -40,3 +40,15 @@ export const getByResumeId = withErrorHandling(async (resumeId: string) => {
 
   return data[0];
 });
+
+export const deleteAllResumes = withErrorHandling(async () => {
+  const data = await db
+    .delete(AnalyzedResumes)
+    .where(eq(AnalyzedResumes.createdBy, await getSessionUserId()));
+
+  if (!data) {
+    throw new Error("Failed to delete all resumes");
+  }
+
+  return data;
+});

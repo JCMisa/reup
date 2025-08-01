@@ -1,13 +1,18 @@
-import React, { Suspense } from "react";
+"use client";
+
+import React, { Suspense, useEffect, useState } from "react";
 import { TypewriterEffectSmooth } from "../ui/typewriter-effect";
 import ResumeCard from "./ResumeCard";
 import { getUserAnalyzedResumes } from "@/lib/actions/analyzedResumes";
 import EmptyPlaceholder from "./EmptyPlaceholder";
-import { getCurrentUser } from "@/lib/actions/users";
-import { redirect } from "next/navigation";
 import DeleteAllResume from "./DeleteAllResume";
+import { useUser } from "@clerk/nextjs";
 
-const SampleResume = async () => {
+const SampleResume = () => {
+  const { user, isLoaded } = useUser();
+  const [resumes, setResumes] = useState<AnalyzedResumeType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const words = [
     {
       text: "Unlock",
@@ -27,24 +32,58 @@ const SampleResume = async () => {
     },
   ];
 
-  const [user, userResumes] = await Promise.all([
-    getCurrentUser(),
-    getUserAnalyzedResumes(),
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isLoaded || !user) return;
 
-  if (!user) {
-    redirect("/sign-in");
+      try {
+        const userResumes = await getUserAnalyzedResumes();
+        const resumesData: AnalyzedResumeType[] = Array.isArray(userResumes)
+          ? userResumes
+          : [];
+        setResumes(resumesData);
+      } catch (error) {
+        console.error("Error fetching resumes:", error);
+        setResumes([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user, isLoaded]);
+
+  if (!isLoaded || isLoading) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center space-y-12 px-5 sm:px-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading resumes...</p>
+        </div>
+      </div>
+    );
   }
 
-  const resumes: AnalyzedResumeType[] = userResumes;
+  if (!user) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center space-y-12 px-5 sm:px-20">
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Please sign in to view your resumes.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col items-center justify-center space-y-12 px-5 sm:px-20">
       <div className="flex flex-col items-center justify-center gap-2">
         <TypewriterEffectSmooth words={words} />
         <p className="text-center text-sm lg:text-lg text-muted-foreground">
-          Explore real-world examples of how ReUp&apos;s AI refines, perfects,
-          and elevates your professional story.
+          {resumes.length > 0
+            ? "Explore real-world examples of how ReUp's AI refines, perfects, and elevates your professional story."
+            : "No resumes found. Please upload a resume to get started."}
         </p>
       </div>
 
